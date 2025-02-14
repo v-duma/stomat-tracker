@@ -9,7 +9,17 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-analytics.js";
-import { firebaseConfig } from "./firebaseConfig.js";
+
+// Ваші налаштування Firebase залишаються без змін
+const firebaseConfig = {
+  apiKey: "AIzaSyDWLc2hvFj9H1Lxt2g9RZ3YaBziVzo6IaM",
+  authDomain: "dr-dluhunovych.firebaseapp.com",
+  projectId: "dr-dluhunovych",
+  storageBucket: "dr-dluhunovych.firebasestorage.app",
+  messagingSenderId: "1039035115906",
+  appId: "1:1039035115906:web:00074738e04c271c8c079b",
+  measurementId: "G-8L8RFQ2WLG",
+};
 
 // Ініціалізація Firebase
 const app = initializeApp(firebaseConfig);
