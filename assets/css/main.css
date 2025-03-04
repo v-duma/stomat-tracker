@@ -2,6 +2,8 @@
 @import url("https://fonts.googleapis.com/css?family=Lato:400,400italic,700,700italic|Source+Code+Pro:400");
 @import url("https://fonts.googleapis.com/css2?family=Mr+De+Haviland&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&display=swap");
+
 /*
 	Read Only by HTML5 UP
 	html5up.net | @ajlkn
@@ -1898,7 +1900,7 @@ header.major h2 {
 header.major h2 + p {
   color: #777;
   font-size: 1.75em;
-  font-weight: 700;
+  font-weight: 200;
   margin-top: -0.75em;
 }
 
@@ -1925,7 +1927,8 @@ input[type="text"],
 input[type="password"],
 input[type="email"],
 select,
-textarea {
+textarea,
+input {
   -moz-appearance: none;
   -webkit-appearance: none;
   -ms-appearance: none;
@@ -2631,7 +2634,6 @@ input[type="button"],
   color: #ffffff !important;
   cursor: pointer;
   display: inline-block;
-  font-weight: 700;
   height: 2.75em;
   line-height: 2.75em;
   padding: 0 1.5em;
@@ -3160,6 +3162,7 @@ input[type="button"]:disabled,
   #titleBar .title a {
     border: 0;
     text-decoration: none;
+    color: #5271ff;
   }
 
   #titleBar .toggle {
@@ -3267,7 +3270,7 @@ input[type="button"]:disabled,
   }
 
   header.major h2 + p {
-    font-size: 1.5em;
+    font-size: 1.1em;
   }
 
   /* Features */
@@ -3320,6 +3323,10 @@ input[type="button"]:disabled,
 
   #main > section > .container {
     padding: 2em 0 0 0;
+  }
+
+  #main > #one > .container {
+    padding-top: 0;
   }
 
   /* Footer */
@@ -3639,7 +3646,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   }
 }
 
-#view-daily-statistics {
+#view-daily-statistics,
+#get-statistics {
   background-color: #5271ff;
   color: #ffffff !important;
   border-radius: 5px;
@@ -3648,4 +3656,27 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 #statistics {
   margin-bottom: 2em;
+}
+
+#get-statistics {
+  margin-top: 1rem;
+}
+
+.unbounded-font {
+  font-family: "Unbounded", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.major > h2,
+.major > p {
+  font-family: "Unbounded", sans-serif;
+}
+
+a {
+  color: #5271ff;
+}
+
+.container > h3 {
+  font-family: "Unbounded", sans-serif;
 }

@@ -12,6 +12,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, user-scalable=no"
     />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <link rel="stylesheet" href="assets/css/main.css" />
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <link
@@ -25,7 +26,11 @@
       crossorigin="anonymous"
     />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.6.14/css/lightgallery-bundle.min.css">
+    <!-- CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightgallery-js/1.4.0/css/lightgallery.min.css">
+<!-- JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightgallery-js/1.4.0/js/lightgallery.min.js"></script>
+
 
   </head>
   <body class="is-preload">
@@ -80,11 +85,11 @@
           <div class="container">
             <header class="major">
               <h2>Дмитро Длугунович</h2>
-              <p>Стоматолог, якому довіряють</p>
+              <p>стоматолог, якому довіряють</p>
             </header>
             <p>
               Багаторічний досвід, сучасні методики та індивідуальний підхід до
-              кожного пацієнта
+              кожного пацієнта!
             </p>
           </div>
         </section>
@@ -248,7 +253,7 @@
           class="authorized-section"
         >
           <div class="container">
-            <h2>Календар</h2>
+            <h3>Календар</h3>
             <div id="calendar"></div>
 
             <!-- Модальне вікно для відображення інформації -->
@@ -267,10 +272,9 @@
 <!-- Статистика -->
 <section id="statistics" class="authorized-section" style="display: none;">
   <div class="container">
-  <h2>Статистика за вибраний період</h2>
+  <h3>Статистика</h3>
 
   <!-- Форма для вибору періоду -->
-  <label for="period-select">Виберіть період:</label>
   <select id="period-select">
     <option value="" disabled selected>Вибери період</option>
     <option value="week">Тиждень</option>
@@ -285,7 +289,7 @@
     <input type="date" id="start-date" />
     <label for="end-date">Дата завершення:</label>
     <input type="date" id="end-date" />
-    <button id="get-statistics" type="button">Дізнатися</button>
+    <button id="get-statistics" type="button" class="button">Дізнатися</button>
   </div>
 
   
@@ -424,9 +428,7 @@
     <!-- FullCalendar CSS -->
     <!-- Підключаємо calendar.js ПІСЛЯ FullCalendar -->
      <!-- Підключення бібліотеки lightGallery (в кінці для запобігання проблем з порядком) -->
-   <script src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.6.14/lightgallery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lightgallery/plugins/thumbnails.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.6.14/lightgallery.min.js"></script>
     <!-- Ваш скрипт для ініціалізації галереї -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {

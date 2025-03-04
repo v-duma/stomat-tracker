@@ -278,28 +278,47 @@ document
   });
 
 // Обробка кліку на кнопку "Дізнатися" для власного періоду
+// Обробка кліку на кнопку "Дізнатися" для власного періоду
 document
   .getElementById("get-statistics")
   .addEventListener("click", function () {
-    const startDate = document.getElementById("start-date").value;
-    const endDate = document.getElementById("end-date").value;
+    const startDateInput = document.getElementById("start-date").value;
+    const endDateInput = document.getElementById("end-date").value;
 
-    // Перевірка на порожні дати
-    if (!startDate || !endDate) {
+    // Перевірка на порожні значення
+    if (!startDateInput || !endDateInput) {
       alert("Будь ласка, введіть обидві дати.");
       return;
     }
 
-    const { startDate: start, endDate: end } = getDateRange("custom");
+    const startDate = new Date(startDateInput);
+    const endDate = new Date(endDateInput);
 
     // Перевірка на валідність дат
-    if (!start || !end || isNaN(start) || isNaN(end)) {
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       alert("Введено некоректну дату.");
+      console.error("Некоректні дати:", startDateInput, endDateInput);
       return;
     }
 
-    // Оновлюємо статистику для введених дат
-    updateStatistics(start, end);
+    // Перевірка, що дата завершення не передує даті початку
+    if (endDate < startDate) {
+      alert("Дата завершення не може бути раніше дати початку!");
+      console.error("Дата завершення раніше дати початку:", startDate, endDate);
+      return;
+    }
+
+    // Передаємо коректні дати у форматі YYYY-MM-DD
+    const formattedStartDate = startDate.toISOString().split("T")[0];
+    const formattedEndDate = endDate.toISOString().split("T")[0];
+
+    console.log(
+      "📊 Оновлення статистики з",
+      formattedStartDate,
+      "по",
+      formattedEndDate
+    );
+    updateStatistics(formattedStartDate, formattedEndDate);
   });
 
 // Функція для форматування часу у формат "X год Y хв"
@@ -421,11 +440,11 @@ async function openStatisticsModal(startDate, endDate) {
         detailsContent += `<li><b>${record.date}</b> <span>${record.startTime} - ${record.endTime}</span></li>`;
       });
 
-      detailsContent += `<li><b>Разом:</b> <span>${totalSalary.toFixed(
+      detailsContent += `<li><b>Загальна ЗП:</b> <span>${totalSalary.toFixed(
         2
       )} грн</span></li>`;
     } else {
-      detailsContent = "<p>Дані не знайдено для цього періоду.</p>";
+      detailsContent = "<p>Бубічок, ти проїбланив цей час і ноу мані 😢</p>";
     }
 
     document.getElementById("daily-details-content").innerHTML = detailsContent;
