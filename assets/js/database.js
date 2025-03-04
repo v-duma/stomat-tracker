@@ -35,6 +35,8 @@ export async function fetchDataByDate(date) {
   try {
     const recordsRef = collection(db, "working_hours");
     const q = query(recordsRef, where("date", "==", date));
+
+    console.log("🔥 Querying Firestore for date:", date); // Дивимося, яку дату передаємо
     const querySnapshot = await getDocs(q);
 
     let result = [];
@@ -42,9 +44,11 @@ export async function fetchDataByDate(date) {
       result.push(doc.data());
     });
 
+    console.log("📌 Firestore result for", date, ":", result); // Дивимося, що отримуємо
+
     return result;
   } catch (error) {
-    console.error("Помилка при отриманні даних:", error);
+    console.error("❌ Помилка при отриманні даних:", error);
     return [];
   }
 }
@@ -127,28 +131,35 @@ export async function addWorkingHours(
 // Функція для оновлення кнопки та відображення секцій
 function updateAuthState() {
   const loggedInUser = localStorage.getItem("loggedInUser");
+  const statisticsSection = document.getElementById("statistics"); // Отримуємо секцію статистики
+
   if (loggedInUser) {
     authButton.textContent = "Вийти";
     authButton.onclick = logout;
     loginSection.style.display = "none";
     authorizedSection.style.display = "block";
+    statisticsSection.style.display = "block"; // Показуємо статистику
   } else {
     authButton.textContent = "Ввійти";
     authButton.onclick = () => {
       loginSection.style.display = "block";
     };
     authorizedSection.style.display = "none";
+    statisticsSection.style.display = "none"; // Ховаємо статистику
   }
 }
 
 // Функція для авторизації
 async function authenticateUser(username, password) {
+  document.getElementById("loading-overlay").style.display = "flex"; // Показати прелоадер
+
   const usersRef = collection(db, "users");
   const q = query(usersRef, where("username", "==", username));
   const querySnapshot = await getDocs(q);
 
   if (querySnapshot.empty) {
-    alert("No user found with this username!");
+    alert("❌ Користувача не знайдено!");
+    document.getElementById("loading-overlay").style.display = "none"; // Приховати прелоадер
     return false;
   }
 
@@ -156,17 +167,24 @@ async function authenticateUser(username, password) {
   querySnapshot.forEach((doc) => {
     const userData = doc.data();
     if (userData.password === password) {
-      console.log("User authenticated successfully.");
+      console.log("✅ Авторизація успішна!");
       localStorage.setItem("loggedInUser", username);
       authenticated = true;
     }
   });
 
   if (!authenticated) {
-    alert("Incorrect password.");
+    alert("❌ Невірний пароль.");
+    document.getElementById("loading-overlay").style.display = "none"; // Приховати прелоадер
   }
 
   updateAuthState();
+
+  // Додаємо невелику затримку перед оновленням сторінки для плавного ефекту
+  setTimeout(() => {
+    location.reload();
+  }, 500);
+
   return authenticated;
 }
 
@@ -260,3 +278,101 @@ document
     await addWorkingHours(date, startTime, endTime, workDuration, dailySalary);
     alert("Дані успішно додано!");
   });
+// Функція для отримання статистики за обраний період
+export async function fetchStatistics(startDate, endDate) {
+  if (!startDate || !endDate) {
+    console.error("❌ Некоректні дати:", startDate, endDate);
+    return [];
+  }
+
+  try {
+    const recordsRef = collection(db, "working_hours");
+
+    console.log(
+      "🔎 Fetching from Firestore for period:",
+      startDate,
+      "to",
+      endDate
+    );
+
+    const startDateStr =
+      typeof startDate === "string"
+        ? startDate
+        : startDate.toISOString().split("T")[0];
+    const endDateStr =
+      typeof endDate === "string"
+        ? endDate
+        : endDate.toISOString().split("T")[0];
+
+    console.log("🛠 Querying Firestore from", startDateStr, "to", endDateStr);
+
+    const q = query(
+      recordsRef,
+      where("date", ">=", startDateStr),
+      where("date", "<=", endDateStr)
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    let records = [];
+    querySnapshot.forEach((doc) => {
+      records.push(doc.data());
+    });
+
+    console.log("📌 Fetched records:", records);
+    return records;
+  } catch (error) {
+    console.error("❌ Помилка при отриманні статистики:", error);
+    return [];
+  }
+}
+
+// Функція для обчислення статистики
+export function calculateStatistics(records) {
+  let totalHours = 0;
+  let totalSalary = 0;
+  let minHours = null; // Змінюємо на null, щоб перевірити на відсутність даних
+  let maxHours = 0;
+  let minSalary = null; // Змінюємо на null
+  let maxSalary = 0;
+
+  records.forEach((record) => {
+    const workDuration = record.workDuration;
+    const dailySalary = parseFloat(record.dailySalary.replace(" грн", ""));
+
+    const match = workDuration.match(/(\d+)\sгод\s(\d+)\sхв/);
+    if (match) {
+      const hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      const totalDurationHours = hours + minutes / 60;
+
+      totalHours += totalDurationHours;
+      totalSalary += dailySalary;
+
+      // Обновляємо максимальні та мінімальні значення, враховуючи наявність даних
+      if (minHours === null || totalDurationHours < minHours) {
+        minHours = totalDurationHours;
+      }
+      if (totalDurationHours > maxHours) {
+        maxHours = totalDurationHours;
+      }
+
+      if (minSalary === null || dailySalary < minSalary) {
+        minSalary = dailySalary;
+      }
+      if (dailySalary > maxSalary) {
+        maxSalary = dailySalary;
+      }
+    }
+  });
+
+  // Перевіряємо, чи є значення, якщо їх не було, виводимо 0 або повідомлення
+  return {
+    totalHours: totalHours || 0,
+    totalSalary: totalSalary || 0,
+    minHours: minHours !== null ? minHours : 0,
+    maxHours: maxHours || 0,
+    minSalary: minSalary !== null ? minSalary : 0,
+    maxSalary: maxSalary || 0,
+  };
+}

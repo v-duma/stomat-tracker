@@ -3,6 +3,8 @@ import {
   addWorkingHours,
   calculateWorkDuration,
   calculateDailySalary,
+  fetchStatistics,
+  calculateStatistics,
 } from "/assets/js/database.js";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -18,6 +20,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "dayGridMonth",
     locale: "uk",
+    firstDay: 1,
+    showNonCurrentDates: false,
     selectable: true,
     dateClick: async function (info) {
       const selectedDate = info.dateStr; // Формат ISO: "2025-02-06"
@@ -175,13 +179,16 @@ function checkIfTimerNeeded(selectedDate, startTime, endTime) {
 }
 
 // Закриття модального вікна при натисканні на хрестик або поза модалкою
+// Закриття модального вікна по хрестику або кліку поза ним
 document.addEventListener("DOMContentLoaded", function () {
-  const modal = document.getElementById("date-info-modal");
-  const closeModal = document.querySelector(".close-modal");
+  const modal = document.getElementById("details-modal");
+  const closeModal = modal.querySelector(".close-modal");
 
-  closeModal.addEventListener("click", () => {
-    modal.style.display = "none";
-  });
+  if (closeModal) {
+    closeModal.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+  }
 
   window.addEventListener("click", (event) => {
     if (event.target === modal) {
@@ -189,3 +196,297 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+// Функція для отримання діапазону дат на основі вибраного періоду
+function getDateRange(period) {
+  const now = new Date(); // Отримуємо поточну дату
+  const dayOfWeek = now.getDay(); // Отримуємо день тижня (0 - неділя, 1 - понеділок, ...)
+
+  let startDate, endDate;
+
+  if (period === "week") {
+    // Якщо сьогодні неділя (dayOfWeek === 0), то понеділок має бути 6 днів тому
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Рахуємо кількість днів до понеділка
+
+    // Створюємо нові об'єкти для понеділка і неділі поточного тижня
+    startDate = new Date(now);
+    startDate.setDate(now.getDate() - diffToMonday); // Понеділок поточного тижня
+    endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6); // Неділя поточного тижня
+  } else if (period === "month") {
+    // Початок місяця (1 число поточного місяця)
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Визначаємо останній день поточного місяця
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  } else if (period === "year") {
+    startDate = new Date(now.getFullYear(), 0, 1); // Початок року
+    endDate = new Date(now.getFullYear(), 11, 31); // Кінець року
+  }
+
+  // Вибір власного періоду
+  if (period === "custom") {
+    const start = document.getElementById("start-date").value;
+    const end = document.getElementById("end-date").value;
+
+    // Перевірка правильності дат
+    if (!start || !end) {
+      return { startDate: null, endDate: null }; // Повертаємо null, якщо дата не введена
+    }
+
+    startDate = new Date(start);
+    endDate = new Date(end);
+
+    // Перевірка на валідність дат
+    if (isNaN(startDate) || isNaN(endDate)) {
+      return { startDate: null, endDate: null }; // Якщо дати некоректні
+    }
+  }
+
+  return {
+    startDate:
+      startDate instanceof Date
+        ? startDate.toISOString().split("T")[0]
+        : startDate,
+    endDate:
+      endDate instanceof Date ? endDate.toISOString().split("T")[0] : endDate,
+  };
+}
+
+// Обробник для вибору періоду
+document
+  .getElementById("period-select")
+  .addEventListener("change", function () {
+    const period = this.value;
+    const { startDate, endDate } = getDateRange(period);
+
+    // Якщо вибрано "Власний період", показуємо поля для введення дат
+    if (period === "custom") {
+      document.getElementById("custom-period").style.display = "block";
+    } else {
+      document.getElementById("custom-period").style.display = "none";
+    }
+
+    // Спочатку не показуємо статистику, якщо не вибрано період
+    if (period === "") {
+      hideStatistics();
+      return;
+    }
+
+    // Відображаємо статистику для обраного періоду
+    updateStatistics(startDate, endDate);
+  });
+
+// Обробка кліку на кнопку "Дізнатися" для власного періоду
+document
+  .getElementById("get-statistics")
+  .addEventListener("click", function () {
+    const startDate = document.getElementById("start-date").value;
+    const endDate = document.getElementById("end-date").value;
+
+    // Перевірка на порожні дати
+    if (!startDate || !endDate) {
+      alert("Будь ласка, введіть обидві дати.");
+      return;
+    }
+
+    const { startDate: start, endDate: end } = getDateRange("custom");
+
+    // Перевірка на валідність дат
+    if (!start || !end || isNaN(start) || isNaN(end)) {
+      alert("Введено некоректну дату.");
+      return;
+    }
+
+    // Оновлюємо статистику для введених дат
+    updateStatistics(start, end);
+  });
+
+// Функція для форматування часу у формат "X год Y хв"
+function formatTime(hours) {
+  const h = Math.floor(hours); // Отримуємо години
+  const m = Math.round((hours - h) * 60); // Отримуємо хвилини
+
+  return `${h} год ${m} хв`;
+}
+
+// Функція для оновлення статистики
+async function updateStatistics(startDate, endDate) {
+  if (
+    !startDate ||
+    !endDate ||
+    isNaN(new Date(startDate)) ||
+    isNaN(new Date(endDate))
+  ) {
+    console.error("Некоректні дати: ", startDate, endDate);
+    return;
+  }
+
+  const records = await fetchStatistics(startDate, endDate);
+
+  const stats = calculateStatistics(records);
+
+  // Показуємо статистику
+  document.getElementById("total-hours").style.display = "block";
+  document.getElementById("total-salary").style.display = "block";
+  document.getElementById("max-hours").style.display = "block";
+  document.getElementById("min-hours").style.display = "block";
+  document.getElementById("max-salary").style.display = "block";
+  document.getElementById("min-salary").style.display = "block";
+
+  // Використовуємо formatTime для форматування часу
+  document.getElementById(
+    "total-hours"
+  ).textContent = `Загальна кількість годин: ${formatTime(stats.totalHours)}`;
+  document.getElementById(
+    "total-salary"
+  ).textContent = `Загальна зарплата: ${stats.totalSalary.toFixed(2)} грн`;
+  document.getElementById(
+    "max-hours"
+  ).textContent = `Максимальна кількість годин у день: ${formatTime(
+    stats.maxHours
+  )}`;
+  document.getElementById(
+    "min-hours"
+  ).textContent = `Мінімальна кількість годин у день: ${formatTime(
+    stats.minHours
+  )}`;
+  document.getElementById(
+    "max-salary"
+  ).textContent = `Максимальна зарплата за день: ${stats.maxSalary.toFixed(
+    2
+  )} грн`;
+  document.getElementById(
+    "min-salary"
+  ).textContent = `Мінімальна зарплата за день: ${stats.minSalary.toFixed(
+    2
+  )} грн`;
+
+  // Показуємо кнопку для відкриття модального вікна
+  document.getElementById("view-daily-statistics").style.display = "inline";
+}
+document
+  .getElementById("view-daily-statistics")
+  .addEventListener("click", async () => {
+    const { startDate, endDate } = getDateRange(
+      document.getElementById("period-select").value
+    );
+
+    // Відкриваємо модальне вікно зі статистикою по днях
+    openStatisticsModal(startDate, endDate);
+  });
+
+// Функція для приховування статистики
+function hideStatistics() {
+  document.getElementById("total-hours").style.display = "none";
+  document.getElementById("total-salary").style.display = "none";
+  document.getElementById("max-hours").style.display = "none";
+  document.getElementById("min-hours").style.display = "none";
+  document.getElementById("max-salary").style.display = "none";
+  document.getElementById("min-salary").style.display = "none";
+}
+
+// Додати виклик updateStatistics в обробник вибору періоду (як показано раніше)
+document
+  .getElementById("period-select")
+  .addEventListener("change", function () {
+    const period = this.value;
+    const { startDate, endDate } = getDateRange(period);
+
+    // Відображаємо дані для вибраного періоду
+    updateStatistics(startDate, endDate);
+
+    // Показуємо/ховаємо поля для власного періоду
+    if (period === "custom") {
+      document.getElementById("custom-period").style.display = "block";
+    } else {
+      document.getElementById("custom-period").style.display = "none";
+    }
+  });
+
+async function openStatisticsModal(startDate, endDate) {
+  // Показуємо прелоадер перед запитом
+  document.getElementById("loading-overlay").style.display = "flex";
+
+  try {
+    const { allRecords, totalSalary } = await fetchAllDaysStatistics(
+      startDate,
+      endDate
+    );
+
+    let detailsContent = "<ul>";
+
+    if (allRecords.length > 0) {
+      allRecords.forEach((record) => {
+        detailsContent += `<li><b>${record.date}</b> <span>${record.startTime} - ${record.endTime}</span></li>`;
+      });
+
+      detailsContent += `<li><b>Разом:</b> <span>${totalSalary.toFixed(
+        2
+      )} грн</span></li>`;
+    } else {
+      detailsContent = "<p>Дані не знайдено для цього періоду.</p>";
+    }
+
+    document.getElementById("daily-details-content").innerHTML = detailsContent;
+    document.getElementById("details-modal").style.display = "flex";
+  } catch (error) {
+    console.error("❌ Помилка завантаження даних:", error);
+    document.getElementById("daily-details-content").innerHTML =
+      "<p>Сталася помилка при отриманні даних.</p>";
+  } finally {
+    // Ховаємо прелоадер після завершення запиту
+    document.getElementById("loading-overlay").style.display = "none";
+  }
+}
+
+// Функція для отримання всіх записів по днях за вибраний період
+async function fetchAllDaysStatistics(startDate, endDate) {
+  const allRecords = [];
+  let totalSalary = 0;
+  let currentDate = new Date(startDate);
+
+  while (currentDate <= new Date(endDate)) {
+    const dateStr = currentDate.toISOString().split("T")[0]; // Формат YYYY-MM-DD
+
+    // Форматуємо дату у DD.MM.YYYY
+    const formattedDate = dateStr.split("-").reverse().join(".");
+
+    console.log("📅 Отримуємо дані для:", formattedDate);
+
+    const records = await fetchStatisticsByDate(dateStr);
+    console.log("📌 Отримані записи для", formattedDate, ":", records);
+
+    records.forEach((record) => {
+      let recordDate = record.date;
+      if (typeof record.date !== "string") {
+        console.warn("⚠ `record.date` не є рядком. Конвертуємо...");
+        recordDate = record.date.toDate().toISOString().split("T")[0];
+      }
+
+      // Конвертуємо дату у потрібний формат
+      const formattedRecordDate = recordDate.split("-").reverse().join(".");
+
+      allRecords.push({
+        date: formattedRecordDate,
+        startTime: record.startTime || "—",
+        endTime: record.endTime || "—",
+        salary: record.dailySalary || "0 грн",
+      });
+
+      totalSalary += parseFloat(record.dailySalary.replace(" грн", "")) || 0;
+    });
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  console.log("📊 Фінальні дані для модального вікна:", allRecords);
+  return { allRecords, totalSalary };
+}
+
+// Функція для отримання даних по конкретній даті
+async function fetchStatisticsByDate(date) {
+  const data = await fetchDataByDate(date);
+  console.log("Data fetched for", date, ":", data); // Лог отриманих даних
+  return data;
+}

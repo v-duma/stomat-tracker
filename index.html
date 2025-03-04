@@ -25,6 +25,7 @@
       crossorigin="anonymous"
     />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.6.14/css/lightgallery-bundle.min.css">
 
   </head>
   <body class="is-preload">
@@ -226,7 +227,7 @@
                 required
               />
 
-              <button type="submit">Ввійти</button>
+              <button type="submit" class="primary button">Ввійти</button>
             </form>
           </div>
         </section>
@@ -245,7 +246,6 @@
         <section
           id="calendar-section"
           class="authorized-section"
-          style="display: none"
         >
           <div class="container">
             <h2>Календар</h2>
@@ -263,6 +263,58 @@
             </div>
           </div>
         </section>
+
+<!-- Статистика -->
+<section id="statistics" class="authorized-section" style="display: none;">
+  <div class="container">
+  <h2>Статистика за вибраний період</h2>
+
+  <!-- Форма для вибору періоду -->
+  <label for="period-select">Виберіть період:</label>
+  <select id="period-select">
+    <option value="" disabled selected>Вибери період</option>
+    <option value="week">Тиждень</option>
+    <option value="month">Місяць</option>
+    <option value="year">Рік</option>
+    <option value="custom">Власний період</option>
+  </select>
+
+  <!-- Поля для введення власного періоду (будуть показуватися, коли вибрано "Власний період") -->
+  <div id="custom-period" style="display: none;">
+    <label for="start-date">Дата початку:</label>
+    <input type="date" id="start-date" />
+    <label for="end-date">Дата завершення:</label>
+    <input type="date" id="end-date" />
+    <button id="get-statistics" type="button">Дізнатися</button>
+  </div>
+
+  
+  <!-- Виведення статистики, спочатку приховані -->
+  <p id="total-hours" style="display: none;">Загальна кількість годин: 0</p>
+  <p id="total-salary" style="display: none;">Загальна зарплата: 0 грн</p>
+  <p id="max-hours" style="display: none;">Максимальна кількість годин у день: 0 год</p>
+  <p id="min-hours" style="display: none;">Мінімальна кількість годин у день: 0 год</p>
+  <p id="max-salary" style="display: none;">Максимальна зарплата за день: 0 грн</p>
+  <p id="min-salary" style="display: none;">Мінімальна зарплата за день: 0 грн</p>
+
+   <button id="view-daily-statistics" class="button" style="display: none;">Переглянути деталі по днях</button>
+</div>
+</section>
+
+
+<!-- Модальне вікно -->
+<!-- Модальне вікно для статистики по днях -->
+<div id="details-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close-modal">&times;</span>
+    <h3 id="selected-date-title">Деталі по днях</h3>
+    <div id="daily-details-content">
+      <!-- Тут буде відображатися статистика по днях -->
+    </div>
+  </div>
+</div>
+
+
       <section style="display: none;">
       <section id="data-fetch">
         <h2>Отримати дані за датою</h2>
@@ -361,10 +413,29 @@
           </ul>
         </div>
       </section>
+
+      
     </div>
+<!-- Прелоадер (анімований індикатор завантаження) -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+</div>
 
     <!-- FullCalendar CSS -->
     <!-- Підключаємо calendar.js ПІСЛЯ FullCalendar -->
+     <!-- Підключення бібліотеки lightGallery (в кінці для запобігання проблем з порядком) -->
+   <script src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.6.14/lightgallery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery/plugins/thumbnails.min.js"></script>
+
+    <!-- Ваш скрипт для ініціалізації галереї -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(() => {
+      document.getElementById("loading-overlay").style.display = "none";
+    }, 300); // Зникає після 300 мс, щоб не було блимаючого ефекту
+  });
+</script>
+
     <script type="module" src="/assets/js/calendar.js"></script>
 
     <!-- Scripts -->
@@ -462,9 +533,7 @@
         }
       });
     </script>
-
     <script type="module" src="assets/js/database.js"></script>
-
     <script src="assets/js/jquery.min.js"></script>
     <script src="assets/js/jquery.scrollex.min.js"></script>
     <script src="assets/js/jquery.scrolly.min.js"></script>
@@ -472,5 +541,6 @@
     <script src="assets/js/breakpoints.min.js"></script>
     <script src="assets/js/util.js"></script>
     <script src="assets/js/main.js"></script>
+
   </body>
 </html>

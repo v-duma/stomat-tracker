@@ -2729,20 +2729,6 @@ input[type="button"].primary,
   color: #ffffff !important;
 }
 
-input[type="submit"].primary:hover,
-input[type="reset"].primary:hover,
-input[type="button"].primary:hover,
-.button.primary:hover {
-  background-color: #5ed0b1;
-}
-
-input[type="submit"].primary:active,
-input[type="reset"].primary:active,
-input[type="button"].primary:active,
-.button.primary:active {
-  background-color: #39c29d;
-}
-
 input[type="submit"].disabled,
 input[type="submit"]:disabled,
 input[type="reset"].disabled,
@@ -3557,12 +3543,14 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   border: 0;
 }
 
-#date-info-content > ul {
+#date-info-content > ul,
+#daily-details-content > ul {
   list-style: none;
 }
 
 @media screen and (min-width: 425px) {
-  #date-info-content > ul > li {
+  #date-info-content > ul > li,
+  #daily-details-content > ul > li {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -3570,7 +3558,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 @media screen and (max-width: 424px) {
-  #date-info-content > ul > li {
+  #date-info-content > ul > li,
+  #daily-details-content > ul > li {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -3596,4 +3585,67 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 .col-12 > textarea {
   width: 100%;
+}
+
+.fc-col-header {
+  width: 100%;
+}
+
+#calendar {
+  margin-bottom: 2em;
+}
+/* Стилі для модального вікна */
+#details-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+/* Прелоадер */
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  display: none; /* Ховаємо за замовчуванням */
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 5px solid #fff;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#view-daily-statistics {
+  background-color: #5271ff;
+  color: #ffffff !important;
+  border-radius: 5px;
+  border: 0;
+  width: 100%;
+}
+#statistics {
+  margin-bottom: 2em;
 }
