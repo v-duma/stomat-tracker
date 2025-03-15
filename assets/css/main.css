@@ -3654,7 +3654,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   border: 0;
   width: 100%;
 }
-#statistics {
+#statistics,
+.justify-content-center {
   margin-bottom: 2em;
 }
 
@@ -3679,4 +3680,24 @@ a {
 
 .container > h3 {
   font-family: "Unbounded", sans-serif;
+}
+
+.lg-thumb-item {
+  height: 35px !important;
+}
+
+.lg-outer .lg-object {
+  max-height: 83% !important;
+}
+
+marquee {
+  font-family: "Unbounded";
+  background-color: #5271ff;
+  color: white;
+  font-size: 8px;
+  display: block;
+}
+
+body {
+  font-family: "Montserrat", serif !important;
 }
