@@ -2995,7 +2995,7 @@ input[type="button"]:disabled,
   }
 
   #header > header {
-    padding: 2em;
+    padding: 1em;
   }
 
   #header > footer {
@@ -3299,7 +3299,7 @@ input[type="button"]:disabled,
   }
 
   #header > header {
-    padding: 2em;
+    padding: 1em;
   }
 
   #header > header .avatar {
@@ -3696,8 +3696,24 @@ marquee {
   color: white;
   font-size: 8px;
   display: block;
+  white-space: nowrap;
+  will-change: transform;
+  animation: marquee 10s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    text-transform: translate3d(100%, 0, 0);
+  }
+  to {
+    text-transform: translate3d(-100%, 0, 0);
+  }
 }
 
 body {
   font-family: "Montserrat", serif !important;
+}
+
+#login-section {
+  display: none;
 }
