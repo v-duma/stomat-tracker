@@ -382,3 +382,27 @@ export function calculateStatistics(records) {
     maxSalary: maxSalary || 0,
   };
 }
+
+export async function updateExistingWorkingHours(
+  id, // id документа для оновлення
+  newStartTime,
+  newEndTime,
+  workDuration,
+  dailySalary,
+  notes
+) {
+  try {
+    const docRef = doc(db, "working_hours", id); // Знаходимо документ за id
+    await updateDoc(docRef, {
+      startTime: newStartTime,
+      endTime: newEndTime,
+      workDuration,
+      dailySalary,
+      notes,
+    });
+
+    console.log("Дані успішно оновлено!");
+  } catch (error) {
+    console.error("Помилка при оновленні даних:", error);
+  }
+}

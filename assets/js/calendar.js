@@ -39,20 +39,20 @@ document.addEventListener("DOMContentLoaded", function () {
           .map(
             (d) =>
               `<li>
-                <li><b>Час:</b> <span>${d.startTime} - ${d.endTime}</span><li>
-                <li><b>Тривалість:</b> <span>${d.workDuration}</span><li>
-                <li><b>Примітки:</b> <span>${d.notes || "Не вказано"}</span><li>
-                <li><b>Сума:</b> <span>${
-                  d.dailySalary || "Не розраховано"
-                }</span></li>
-                <li><b>Таймер:</b> <span id="timer-${
-                  d.startTime
-                }">${checkIfTimerNeeded(
+              <li><b>Час:</b> <span>${d.startTime} - ${d.endTime}</span><li>
+              <li><b>Тривалість:</b> <span>${d.workDuration}</span><li>
+              <li><b>Примітки:</b> <span>${d.notes || "Не вказано"}</span><li>
+              <li><b>Сума:</b> <span>${
+                d.dailySalary || "Не розраховано"
+              }</span></li>
+              <li><b>Таймер:</b> <span id="timer-${
+                d.startTime
+              }">${checkIfTimerNeeded(
                 selectedDate,
                 d.startTime,
                 d.endTime
               )}</span>
-              </li>`
+            </li>`
           )
           .join("")}</ul>`;
 
@@ -65,19 +65,19 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         // Якщо дані не знайдено, відображаємо форму для введення
         contentContainer.innerHTML = `
-          <p>Бубічок, ти ще не заповнив інфу на цей день🥲 виправ це!💙</p>
-          <form id="add-new-data-form">
-            <label>Час початку:</label>
-            <div class="time-picker-wrapper">
-            <input type="time" id="new-start-time" required><br>
-            </div>
-            <label>Час завершення:</label>
-            <input type="time" id="new-end-time" required><br>
-            <label>Примітки:</label>
-            <textarea id="new-notes" placeholder="Що цікавого?"></textarea><br>
-            <button type="submit">Додати</button>
-          </form>
-        `;
+        <p>Бубічок, ти ще не заповнив інфу на цей день🥲 виправ це!💙</p>
+        <form id="add-new-data-form">
+          <label>Час початку:</label>
+          <div class="time-picker-wrapper">
+          <input type="time" id="new-start-time" required><br>
+          </div>
+          <label>Час завершення:</label>
+          <input type="time" id="new-end-time" required><br>
+          <label>Примітки:</label>
+          <textarea id="new-notes" placeholder="Що цікавого?"></textarea><br>
+          <button type="submit">Додати</button>
+        </form>
+      `;
 
         // Додаємо обробник для форми
         document
@@ -115,6 +115,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Відкриваємо модальне вікно
       document.getElementById("date-info-modal").style.display = "flex";
+
+      // Перевіряємо наявність даних та відображаємо відповідний блок
+      checkAndDisplayWorkData(selectedDate); // Додаємо перевірку на наявність даних
+    },
+
+    // Подія, яка спрацьовує після рендеру календаря
+    datesSet: async function () {
+      // Отримуємо назву місяця з тулбара
+      const monthTitle =
+        document.querySelector(".fc-toolbar-title").textContent;
+      const monthName = monthTitle.split(" ")[0].toLowerCase(); // Перетворюємо на маленькі літери
+
+      // Масив місяців українською мовою з маленької букви
+      const monthNames = [
+        "січень",
+        "лютий",
+        "березень",
+        "квітень",
+        "травень",
+        "червень",
+        "липень",
+        "серпень",
+        "вересень",
+        "жовтень",
+        "листопад",
+        "грудень",
+      ];
+
+      // Отримуємо індекс місяця (0-11)
+      const visibleMonth = monthNames.indexOf(monthName);
+      const currentYear = calendar.getDate().getFullYear(); // Отримуємо поточний рік
+
+      const firstDay = new Date(currentYear, visibleMonth, 1); // Перша дата видимого місяця
+      const lastDay = new Date(currentYear, visibleMonth + 1, 0); // Остання дата видимого місяця
+
+      let currentDate = firstDay;
+
+      // Перевіряємо всі дати цього місяця
+      while (currentDate <= lastDay) {
+        const formattedDate = currentDate.toISOString().split("T")[0];
+        await checkAndDisplayWorkData(formattedDate); // Перевіряємо наявність даних для кожної дати
+        currentDate.setDate(currentDate.getDate() + 1); // Переходимо до наступного дня
+      }
     },
   });
 
@@ -508,4 +551,254 @@ async function fetchStatisticsByDate(date) {
   const data = await fetchDataByDate(date);
   console.log("Data fetched for", date, ":", data); // Лог отриманих даних
   return data;
+}
+
+async function checkAndDisplayWorkData(selectedDate) {
+  const dayElement = document.querySelector(`[data-date="${selectedDate}"]`);
+  if (!dayElement) return;
+
+  // Отримуємо дані про роботу для цієї дати
+  const data = await fetchDataByDate(selectedDate);
+
+  // Якщо дані є, робимо блок .fc-daygrid-day-bottom видимим
+  const dayBottom = dayElement.querySelector(".fc-daygrid-day-bottom");
+  dayBottom.innerHTML += "<span></span>";
+  if (data.length > 0 && dayBottom) {
+    dayBottom.innerHTML = "<span>work</span>";
+    dayBottom.style.display = "block"; // Відображаємо блок
+  } else if (dayBottom) {
+    dayBottom.style.display = "none"; // Сховуємо блок, якщо даних немає
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const calendarEl = document.getElementById("calendar");
+
+  if (typeof FullCalendar === "undefined") {
+    console.error(
+      "FullCalendar не знайдено! Переконайтеся, що він підключений у index.html."
+    );
+    return;
+  }
+
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: "dayGridMonth",
+    locale: "uk",
+    firstDay: 1,
+    showNonCurrentDates: false,
+    selectable: true,
+    dateClick: async function (info) {
+      const selectedDate = info.dateStr; // Формат ISO: "2025-02-06"
+      document.getElementById(
+        "selected-date-title"
+      ).textContent = `${selectedDate.split("-").reverse().join(".")}`;
+
+      // Отримуємо дані про обрану дату
+      const data = await fetchDataByDate(selectedDate);
+      const contentContainer = document.getElementById("date-info-content");
+
+      if (data.length > 0) {
+        // Відображення заповнених даних
+        contentContainer.innerHTML = `<ul>${data
+          .map(
+            (d) =>
+              `<li>
+              <li><b>Час:</b> <span>${d.startTime} - ${d.endTime}</span><li>
+              <li><b>Тривалість:</b> <span>${d.workDuration}</span><li>
+              <li><b>Примітки:</b> <span>${d.notes || "Не вказано"}</span><li>
+              <li><b>Сума:</b> <span>${
+                d.dailySalary || "Не розраховано"
+              }</span></li>
+              <li><b>Таймер:</b> <span id="timer-${
+                d.startTime
+              }">${checkIfTimerNeeded(
+                selectedDate,
+                d.startTime,
+                d.endTime
+              )}</span>
+            </li>`
+          )
+          .join("")}</ul>`;
+
+        // Запускаємо таймер для всіх активних робіт
+        data.forEach((d) => {
+          if (isWorkActive(selectedDate, d.startTime, d.endTime)) {
+            startRealTimeTimer(`timer-${d.startTime}`, selectedDate, d.endTime);
+          }
+        });
+      } else {
+        // Якщо дані не знайдено, відображаємо форму для введення
+        contentContainer.innerHTML = `
+        <p>Бубічок, ти ще не заповнив інфу на цей день🥲 виправ це!💙</p>
+        <form id="add-new-data-form">
+          <label>Час початку:</label>
+          <div class="time-picker-wrapper">
+          <input type="time" id="new-start-time" required><br>
+          </div>
+          <label>Час завершення:</label>
+          <input type="time" id="new-end-time" required><br>
+          <label>Примітки:</label>
+          <textarea id="new-notes" placeholder="Що цікавого?"></textarea><br>
+          <button type="submit">Додати</button>
+        </form>
+      `;
+
+        // Додаємо обробник для форми
+        document
+          .getElementById("add-new-data-form")
+          .addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const newStartTime =
+              document.getElementById("new-start-time").value;
+            const newEndTime = document.getElementById("new-end-time").value;
+            const newNotes = document.getElementById("new-notes").value;
+
+            // Розраховуємо тривалість і заробітну плату
+            const workDuration = calculateWorkDuration(
+              newStartTime,
+              newEndTime
+            );
+            const hourlyRate = 120; // Ви можете змінити ставку за годину
+            const dailySalary = calculateDailySalary(workDuration, hourlyRate);
+
+            // Додаємо новий запис до бази даних
+            await addWorkingHours(
+              selectedDate,
+              newStartTime,
+              newEndTime,
+              workDuration,
+              dailySalary,
+              newNotes
+            );
+
+            alert("Дані успішно додано!");
+            document.getElementById("date-info-modal").style.display = "none";
+          });
+      }
+
+      // Відкриваємо модальне вікно
+      document.getElementById("date-info-modal").style.display = "flex";
+
+      // Перевіряємо наявність даних та відображаємо відповідний блок
+      checkAndDisplayWorkData(selectedDate); // Додаємо перевірку на наявність даних
+    },
+
+    // Подія, яка спрацьовує після рендеру календаря (перехід між місяцями)
+    datesSet: async function () {
+      // Отримуємо назву місяця з тулбара
+      const monthTitle =
+        document.querySelector(".fc-toolbar-title").textContent;
+      const monthName = monthTitle.split(" ")[0].toLowerCase(); // Перетворюємо на маленькі літери
+
+      // Масив місяців українською мовою з маленької букви
+      const monthNames = [
+        "січень",
+        "лютий",
+        "березень",
+        "квітень",
+        "травень",
+        "червень",
+        "липень",
+        "серпень",
+        "вересень",
+        "жовтень",
+        "листопад",
+        "грудень",
+      ];
+
+      // Отримуємо індекс місяця (0-11)
+      const visibleMonth = monthNames.indexOf(monthName);
+      const currentYear = calendar.getDate().getFullYear(); // Отримуємо поточний рік
+
+      const firstDay = new Date(currentYear, visibleMonth, 1); // Перша дата видимого місяця
+      const lastDay = new Date(currentYear, visibleMonth + 1, 0); // Остання дата видимого місяця
+
+      let currentDate = firstDay;
+
+      // Перевіряємо всі дати цього місяця
+      while (currentDate <= lastDay) {
+        const formattedDate = currentDate.toISOString().split("T")[0];
+        await checkAndDisplayWorkData(formattedDate); // Перевіряємо наявність даних для кожної дати
+        currentDate.setDate(currentDate.getDate() + 1); // Переходимо до наступного дня
+      }
+    },
+
+    // Обробка зміни місяця
+  });
+
+  calendar.render();
+});
+
+// Функція для відкриття форми редагування
+function openEditForm(data) {
+  const contentContainer = document.getElementById("date-info-content");
+  contentContainer.innerHTML = `
+    <h3>Редагувати дані</h3>
+    <form id="edit-data-form">
+      <label>Час початку:</label>
+      <input type="time" id="edit-start-time" value="${
+        data[0].startTime
+      }" required><br>
+      <label>Час завершення:</label>
+      <input type="time" id="edit-end-time" value="${
+        data[0].endTime
+      }" required><br>
+      <label>Примітки:</label>
+      <textarea id="edit-notes">${data[0].notes || ""}</textarea><br>
+      <button type="submit">Зберегти зміни</button>
+    </form>
+  `;
+
+  // Додаємо обробник події для форми редагування
+  document
+    .getElementById("edit-data-form")
+    .addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const editedStartTime = document.getElementById("edit-start-time").value;
+      const editedEndTime = document.getElementById("edit-end-time").value;
+      const editedNotes = document.getElementById("edit-notes").value;
+
+      // Розраховуємо нову тривалість і заробітну плату
+      const workDuration = calculateWorkDuration(
+        editedStartTime,
+        editedEndTime
+      );
+      const hourlyRate = 120; // Ви можете змінити ставку за годину
+      const dailySalary = calculateDailySalary(workDuration, hourlyRate);
+
+      // Оновлюємо дані в базі
+      await updateWorkingHours(
+        data[0].startTime,
+        editedStartTime,
+        editedEndTime,
+        workDuration,
+        dailySalary,
+        editedNotes
+      );
+
+      alert("Зміни збережено!");
+      document.getElementById("date-info-modal").style.display = "none";
+    });
+}
+
+// Функція для оновлення робочих годин в базі даних
+async function updateWorkingHours(
+  oldStartTime,
+  newStartTime,
+  newEndTime,
+  workDuration,
+  dailySalary,
+  notes
+) {
+  // Оновлення даних в базі даних
+  // Тут ви можете викликати відповідну функцію для оновлення даних в базі даних
+  await addWorkingHours(
+    newStartTime,
+    newEndTime,
+    workDuration,
+    dailySalary,
+    notes
+  );
 }
