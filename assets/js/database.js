@@ -6,6 +6,9 @@ import {
   query,
   where,
   addDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
 } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-analytics.js";
@@ -47,7 +50,7 @@ export async function fetchDataByDate(date) {
 
     let result = [];
     querySnapshot.forEach((doc) => {
-      result.push(doc.data());
+      result.push({ id: doc.id, ...doc.data() });
     });
 
     console.log("📌 Firestore result for", date, ":", result); // Дивимося, що отримуємо
@@ -404,5 +407,15 @@ export async function updateExistingWorkingHours(
     console.log("Дані успішно оновлено!");
   } catch (error) {
     console.error("Помилка при оновленні даних:", error);
+  }
+}
+
+export async function deleteWorkingHours(id) {
+  try {
+    const docRef = doc(db, "working_hours", id);
+    await deleteDoc(docRef);
+    console.log("Запис успішно видалено!");
+  } catch (error) {
+    console.error("❌ Помилка при видаленні:", error);
   }
 }

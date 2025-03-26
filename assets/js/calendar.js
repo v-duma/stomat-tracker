@@ -5,6 +5,8 @@ import {
   calculateDailySalary,
   fetchStatistics,
   calculateStatistics,
+  updateExistingWorkingHours,
+  deleteWorkingHours,
 } from "/assets/js/database.js";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -601,24 +603,57 @@ document.addEventListener("DOMContentLoaded", function () {
         // Відображення заповнених даних
         contentContainer.innerHTML = `<ul>${data
           .map(
-            (d) =>
-              `<li>
-              <li><b>Час:</b> <span>${d.startTime} - ${d.endTime}</span><li>
-              <li><b>Тривалість:</b> <span>${d.workDuration}</span><li>
-              <li><b>Примітки:</b> <span>${d.notes || "Не вказано"}</span><li>
-              <li><b>Сума:</b> <span>${
-                d.dailySalary || "Не розраховано"
-              }</span></li>
-              <li><b>Таймер:</b> <span id="timer-${
-                d.startTime
-              }">${checkIfTimerNeeded(
-                selectedDate,
-                d.startTime,
-                d.endTime
-              )}</span>
-            </li>`
+            (d) => `
+      <li>
+        <b>Час:</b> <span>${d.startTime} - ${d.endTime}</span>
+        <b>Тривалість:</b> <span>${d.workDuration}</span>
+        <b>Примітки:</b> <span>${d.notes || "Не вказано"}</span>
+        <b>Сума:</b> <span>${d.dailySalary || "Не розраховано"}</span>
+        <b>Таймер:</b> <span id="timer-${d.startTime}">${checkIfTimerNeeded(
+              selectedDate,
+              d.startTime,
+              d.endTime
+            )}</span>
+        <button class="edit-entry-btn" data-id="${
+          d.id
+        }" data-date="${selectedDate}">Редагувати</button>
+        <button class="delete-entry-btn" data-id="${
+          d.id
+        }" data-date="${selectedDate}">Видалити</button>
+      </li>`
           )
           .join("")}</ul>`;
+        // Обробники кнопок Редагувати
+        document.querySelectorAll(".edit-entry-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.dataset.id;
+            const selected = data.find((item) => item.id === id);
+            openEditFormWithId(id, selected, btn.dataset.date);
+          });
+        });
+
+        // Обробники кнопок Видалити
+        document.querySelectorAll(".delete-entry-btn").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const id = btn.dataset.id;
+            const date = btn.dataset.date;
+
+            if (confirm("Ти впевнений, що хочеш видалити цей запис? 🥺")) {
+              await deleteWorkingHours(id);
+              alert("Запис видалено!");
+              document.getElementById("date-info-modal").style.display = "none";
+              await checkAndDisplayWorkData(date);
+            }
+          });
+        });
+
+        document.querySelectorAll(".edit-entry-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.dataset.id;
+            const selected = data.find((item) => item.id === id);
+            openEditFormWithId(id, selected, btn.dataset.date);
+          });
+        });
 
         // Запускаємо таймер для всіх активних робіт
         data.forEach((d) => {
@@ -633,12 +668,12 @@ document.addEventListener("DOMContentLoaded", function () {
         <form id="add-new-data-form">
           <label>Час початку:</label>
           <div class="time-picker-wrapper">
-          <input type="time" id="new-start-time" required><br>
+          <input type="time" id="new-start-time" required>
           </div>
           <label>Час завершення:</label>
-          <input type="time" id="new-end-time" required><br>
+          <input type="time" id="new-end-time" required>
           <label>Примітки:</label>
-          <textarea id="new-notes" placeholder="Що цікавого?"></textarea><br>
+          <textarea id="new-notes" placeholder="Що цікавого?"></textarea>
           <button type="submit">Додати</button>
         </form>
       `;
@@ -730,59 +765,6 @@ document.addEventListener("DOMContentLoaded", function () {
   calendar.render();
 });
 
-// Функція для відкриття форми редагування
-function openEditForm(data) {
-  const contentContainer = document.getElementById("date-info-content");
-  contentContainer.innerHTML = `
-    <h3>Редагувати дані</h3>
-    <form id="edit-data-form">
-      <label>Час початку:</label>
-      <input type="time" id="edit-start-time" value="${
-        data[0].startTime
-      }" required><br>
-      <label>Час завершення:</label>
-      <input type="time" id="edit-end-time" value="${
-        data[0].endTime
-      }" required><br>
-      <label>Примітки:</label>
-      <textarea id="edit-notes">${data[0].notes || ""}</textarea><br>
-      <button type="submit">Зберегти зміни</button>
-    </form>
-  `;
-
-  // Додаємо обробник події для форми редагування
-  document
-    .getElementById("edit-data-form")
-    .addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      const editedStartTime = document.getElementById("edit-start-time").value;
-      const editedEndTime = document.getElementById("edit-end-time").value;
-      const editedNotes = document.getElementById("edit-notes").value;
-
-      // Розраховуємо нову тривалість і заробітну плату
-      const workDuration = calculateWorkDuration(
-        editedStartTime,
-        editedEndTime
-      );
-      const hourlyRate = 120; // Ви можете змінити ставку за годину
-      const dailySalary = calculateDailySalary(workDuration, hourlyRate);
-
-      // Оновлюємо дані в базі
-      await updateWorkingHours(
-        data[0].startTime,
-        editedStartTime,
-        editedEndTime,
-        workDuration,
-        dailySalary,
-        editedNotes
-      );
-
-      alert("Зміни збережено!");
-      document.getElementById("date-info-modal").style.display = "none";
-    });
-}
-
 // Функція для оновлення робочих годин в базі даних
 async function updateWorkingHours(
   oldStartTime,
@@ -802,3 +784,62 @@ async function updateWorkingHours(
     notes
   );
 }
+
+function openEditFormWithId(id, data, selectedDate) {
+  const contentContainer = document.getElementById("date-info-content");
+  contentContainer.innerHTML = `
+    <h3>Редагувати дані</h3>
+    <form id="edit-data-form">
+      <label>Час початку:</label>
+      <input type="time" id="edit-start-time" value="${
+        data.startTime
+      }" required>
+      <label>Час завершення:</label>
+      <input type="time" id="edit-end-time" value="${data.endTime}" required>
+      <label>Примітки:</label>
+      <textarea id="edit-notes">${data.notes || ""}</textarea>
+      <button type="submit">Зберегти зміни</button>
+    </form>
+  `;
+
+  document
+    .getElementById("edit-data-form")
+    .addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const newStartTime = document.getElementById("edit-start-time").value;
+      const newEndTime = document.getElementById("edit-end-time").value;
+      const newNotes = document.getElementById("edit-notes").value;
+
+      const workDuration = calculateWorkDuration(newStartTime, newEndTime);
+      const hourlyRate = 120;
+      const dailySalary = calculateDailySalary(workDuration, hourlyRate);
+
+      await updateExistingWorkingHours(
+        id,
+        newStartTime,
+        newEndTime,
+        workDuration,
+        dailySalary,
+        newNotes
+      );
+
+      alert("Зміни збережено!");
+      document.getElementById("date-info-modal").style.display = "none";
+      await checkAndDisplayWorkData(selectedDate);
+    });
+}
+
+document.querySelectorAll(".delete-entry-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const id = btn.dataset.id;
+    const date = btn.dataset.date;
+
+    if (confirm("Ти впевнений, що хочеш видалити цей запис? 🥺")) {
+      await deleteWorkingHours(id);
+      alert("Запис видалено!");
+      document.getElementById("date-info-modal").style.display = "none";
+      await checkAndDisplayWorkData(date);
+    }
+  });
+});

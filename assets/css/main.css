@@ -3489,7 +3489,9 @@ form textarea {
   padding: 5px;
 }
 
-form button {
+form button,
+.edit-entry-btn,
+.delete-entry-btn {
   font-family: "Montserrat", serif;
   padding: 8px 12px;
   background-color: #5271ff;
@@ -3501,6 +3503,17 @@ form button {
   font-size: 0.9em;
 }
 
+.delete-entry-btn {
+  background-color: #ec4040;
+}
+.edit-entry-btn,
+.delete-entry-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+#date-info-content > ul {
+  padding: 0;
+}
 .fc .fc-daygrid-day.fc-day-today {
   background-color: #5271ff4a;
 }
@@ -3728,4 +3741,9 @@ body {
   font-size: 10px !important;
   text-align: center;
   color: #fafafa;
+}
+
+#add-new-data-form > button,
+#edit-data-form > button {
+  margin-top: 1.125em;
 }
