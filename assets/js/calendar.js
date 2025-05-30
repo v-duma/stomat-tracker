@@ -9,6 +9,16 @@ import {
   deleteWorkingHours,
 } from "/assets/js/database.js";
 
+// Визначення погодинної ставки залежно від дати
+function getHourlyRate(dateStr) {
+  const date = new Date(dateStr); // Очікується формат YYYY-MM-DD
+  const cutoffDate = new Date("2025-06-01");
+  const defaultRate = 120;
+  const newHourlyRate = 130;
+
+  return date >= cutoffDate ? newHourlyRate : defaultRate;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   const calendarEl = document.getElementById("calendar");
 
@@ -93,11 +103,13 @@ document.addEventListener("DOMContentLoaded", function () {
             const newNotes = document.getElementById("new-notes").value;
 
             // Розраховуємо тривалість і заробітну плату
+
             const workDuration = calculateWorkDuration(
               newStartTime,
               newEndTime
             );
-            const hourlyRate = 120; // Ви можете змінити ставку за годину
+
+            const hourlyRate = getHourlyRate(selectedDate); // Ви можете змінити ставку за годину
             const dailySalary = calculateDailySalary(workDuration, hourlyRate);
 
             // Додаємо новий запис до бази даних
@@ -694,7 +706,7 @@ document.addEventListener("DOMContentLoaded", function () {
               newStartTime,
               newEndTime
             );
-            const hourlyRate = 120; // Ви можете змінити ставку за годину
+            const hourlyRate = getHourlyRate(selectedDate); // Ви можете змінити ставку за годину
             const dailySalary = calculateDailySalary(workDuration, hourlyRate);
 
             // Додаємо новий запис до бази даних
@@ -812,7 +824,7 @@ function openEditFormWithId(id, data, selectedDate) {
       const newNotes = document.getElementById("edit-notes").value;
 
       const workDuration = calculateWorkDuration(newStartTime, newEndTime);
-      const hourlyRate = 120;
+      const hourlyRate = getHourlyRate(selectedDate);
       const dailySalary = calculateDailySalary(workDuration, hourlyRate);
 
       await updateExistingWorkingHours(
