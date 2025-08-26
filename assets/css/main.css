@@ -3714,6 +3714,7 @@ marquee {
   white-space: nowrap;
   will-change: transform;
   animation: marquee 10s linear infinite;
+  display: none;
 }
 
 @keyframes marquee {

@@ -11,12 +11,14 @@ import {
 
 // Визначення погодинної ставки залежно від дати
 function getHourlyRate(dateStr) {
-  const date = new Date(dateStr); // Очікується формат YYYY-MM-DD
-  const cutoffDate = new Date("2025-06-01");
-  const defaultRate = 120;
-  const newHourlyRate = 130;
+  const date = new Date(dateStr); // очікується формат YYYY-MM-DD
 
-  return date >= cutoffDate ? newHourlyRate : defaultRate;
+  const jun2025 = new Date("2025-06-01"); // >= 130 грн
+  const aug2025 = new Date("2025-08-01"); // >= 140 грн
+
+  if (date >= aug2025) return 140; // з 01.08.2025 включно
+  if (date >= jun2025) return 130; // 01.06.2025–31.07.2025
+  return 120; // до 31.05.2025
 }
 
 document.addEventListener("DOMContentLoaded", function () {
